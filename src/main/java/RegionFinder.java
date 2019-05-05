@@ -36,7 +36,6 @@ public class RegionFinder {
 
         copy(filesToCopy);
         merge(filesToMerge, method);
-
     }
 
     private void copy(List<FilePair> files) {
@@ -57,7 +56,7 @@ public class RegionFinder {
 
                 target.merge(source, method);
 
-                // TODO: write file
+                target.write(pair.to.toPath());
             } catch (IOException e) {
                 e.printStackTrace();
             }
