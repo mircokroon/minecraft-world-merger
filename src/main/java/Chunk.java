@@ -1,3 +1,6 @@
+/**
+ * Basic class for holding chunk objects. Chunk data is not parsed as this is not required.
+ */
 public class Chunk {
     int timestamp;
     int location;
@@ -10,5 +13,4 @@ public class Chunk {
         this.size = size;
         this.chunkData = chunkData;
     }
-
 }

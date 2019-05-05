@@ -4,20 +4,24 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class RegionFinder {
     private final static String regionPath = "region";
 
-    String world1;
-    String world2;
+    private String world1;
+    private String world2;
 
     public RegionFinder(String world1, String world2) {
         this.world1 = world1;
         this.world2 = world2;
     }
 
-    public void mergeWorlds(MergeMethod method) throws IOException {
+    /**
+     * Method to merge the two given worlds
+     * @param rule the rule to use when merging MCA files
+     * @throws IOException
+     */
+    public void mergeWorlds(IMergeRule rule) throws IOException {
         List<FilePair> filesToCopy = new ArrayList<>();
         List<FilePair> filesToMerge = new ArrayList<>();
 
@@ -35,9 +39,13 @@ public class RegionFinder {
         promptContinue(filesToCopy, filesToMerge);
 
         copy(filesToCopy);
-        merge(filesToMerge, method);
+        merge(filesToMerge, rule);
     }
 
+    /**
+     * Copy the region files from one world to another.
+     * @param files list of files to be copied
+     */
     private void copy(List<FilePair> files) {
         files.forEach(pair -> {
             try {
@@ -48,13 +56,18 @@ public class RegionFinder {
         });
     }
 
-    private void merge(List<FilePair> files, MergeMethod method) {
+    /**
+     * Merge the files in the given list.
+     * @param files the files to merge
+     * @param rule the merge rule to use for this (e.g. based on chunk date)
+     */
+    private void merge(List<FilePair> files, IMergeRule rule) {
         files.forEach(pair -> {
             try {
                 McaFile target = new McaFile(pair.to);
                 McaFile source = new McaFile(pair.from);
 
-                target.merge(source, method);
+                target.merge(source, rule);
 
                 target.write(pair.to.toPath());
             } catch (IOException e) {
@@ -63,6 +76,11 @@ public class RegionFinder {
         });
     }
 
+    /**
+     * Prompt the user with which files will be copied / merged.
+     * @param copy list of files to be copied
+     * @param merge list of files to be merged
+     */
     private void promptContinue(List<FilePair> copy, List<FilePair> merge) {
         if (copy.size() > 0) {
             System.out.println("Region files to copy: " + copy.size());
@@ -88,7 +106,13 @@ public class RegionFinder {
 
     }
 
-    public Map<String, File> listMcaFiles(String world) throws IOException {
+    /**
+     * Retrieve all the MCA files from a world.
+     * @param world the path of the world, that is, the root directory containing level.dat
+     * @return a map containing files mapped to their filenames
+     * @throws IOException
+     */
+    private Map<String, File> listMcaFiles(String world) throws IOException {
         Path p = Paths.get(world, regionPath);
 
         Map<String, File> map = new HashMap<>();
@@ -101,13 +125,11 @@ public class RegionFinder {
 
         return map;
     }
-
-    private void getMcaUnion() {
-
-    }
-
 }
 
+/**
+ * Class to hold two files -- used to keep track of which files will be moved / merged to where
+ */
 class FilePair {
     File from;
     File to;

@@ -15,16 +15,25 @@ public class McaFile {
     Path filePath;
     byte[] input;
 
-
+    /**
+     * Class to parse and write MCA files
+     * @param file the MCA file to be used
+     * @throws IOException
+     */
     public McaFile(File file) throws IOException {
         chunkMap = readFile(file);
         filePath = Paths.get(file.getAbsolutePath());
     }
 
-    public void merge(McaFile other, MergeMethod method) {
+    /**
+     * Merge changes from the given MCA into this ones
+     * @param other a different MCA file
+     * @param rule the rule to be used for mering
+     */
+    public void merge(McaFile other, IMergeRule rule) {
         other.chunkMap.forEach((pos, newchunk) -> {
             if (this.chunkMap.containsKey(pos)) {
-                if (method.shouldBeMerged(this.chunkMap.get(pos), newchunk)) {
+                if (rule.isAllowedToMerge(this.chunkMap.get(pos), newchunk)) {
                     this.chunkMap.put(pos, newchunk);
                 }
             } else {
@@ -33,13 +42,18 @@ public class McaFile {
         });
     }
 
+    /**
+     * Write the MCA file to the given path. Should be called after merge.
+     * @param path the path to write to
+     * @throws IOException
+     */
     public void write(Path path) throws IOException {
         byte[] locations = new byte[sectorSize];
         byte[] timestamps = new byte[sectorSize];
         Map<Integer, byte[]> chunkDataList = new HashMap<>();
         final int[] maxpos = {0};
 
-        updateChunkPositions(chunkMap);
+        updateChunkLocations(chunkMap);
 
         chunkMap.forEach((pos, chunk) -> {
             setLocation(locations, pos, chunk);
@@ -56,7 +70,13 @@ public class McaFile {
         Files.write(path, toWrite);
     }
 
-    private void updateChunkPositions(Map<Integer, Chunk> chunkMap) {
+    /**
+     * Update the chunk positions in the chunkdata section of the file. Different files may have
+     * have overlapping locations even if the coordinates are different, so we need to recompute
+     * the locations before saving.
+     * @param chunkMap the chunkmap to set the positions for
+     */
+    private void updateChunkLocations(Map<Integer, Chunk> chunkMap) {
         AtomicInteger currentAddress = new AtomicInteger(2);
         chunkMap.forEach((pos, chunk) -> {
             chunk.location = currentAddress.get();
@@ -82,6 +102,12 @@ public class McaFile {
         locations[pos+3] = (byte) chunk.size;
     }
 
+    /**
+     * Join the various parts of the byte array to be saved into one.
+     * @param maxpos the largest byte sector address we will need, depending on the amount of data we
+     *               are saving.
+     * @return the final byte array
+     */
     private byte[] join(byte[] locations, byte[] timestamps, Map<Integer, byte[]> datalist, int maxpos) {
         int totalBytes = locations.length + timestamps.length + maxpos;
 
@@ -132,7 +158,11 @@ public class McaFile {
     }
 
     /**
-     * Converts a number of bytes to a big-endian int
+     * Converts a number of bytes to a big-endian int.
+     * @param arr the total array of bytes
+     * @param start the first byte to use (inclusive)
+     * @param end the last byte to use (INCLUSIVE)
+     * @return the integer created from the bytes
      */
     private static int bytesToInt(byte[] arr, int start, int end) {
         int res = 0;
