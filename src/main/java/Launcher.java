@@ -12,7 +12,8 @@ public class Launcher {
     private static Map<String, IMergeRule> mergeRules = new HashMap<>();
     static {
         mergeRules.put("last-modified", new MergeRuleNewestChunks());
-        mergeRules.put("force", new MergeRuleAlways());
+        mergeRules.put("always", new MergeRuleAlways());
+        mergeRules.put("never", new MergeRuleNever());
     }
 
     public static void main(String[] args) throws IOException {
@@ -30,7 +31,7 @@ public class Launcher {
                 .defaultHelp(true)
                 .description("Merge two Minecraft worlds into one.");
         parser.addArgument("-r", "--rule")
-                .choices("last-modified", "force").setDefault("last-modified")
+                .choices("last-modified", "always", "never").setDefault("last-modified")
                 .help("Set the method used to merge overlapping chunks.");
         parser.addArgument("world1");
         parser.addArgument("world2");
