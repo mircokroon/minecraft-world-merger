@@ -3,7 +3,6 @@ public class Chunk {
     int location;
     int size;
     byte[] chunkData;
-    String x;
 
     public Chunk(int timestamp, int location, int size, byte[] chunkData) {
         this.timestamp = timestamp;
