@@ -21,6 +21,8 @@ public class Launcher {
 
         RegionFinder f = new RegionFinder(ns.getString("target_world"), ns.getString("source_world"));
         f.mergeWorlds(mergeRules.get(ns.getString("rule")));
+
+        System.out.println("Done!");
     }
 
     /**
